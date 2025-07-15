@@ -1,0 +1,135 @@
+{
+  "Verslas": [
+    
+    "https://valor.globo.com/rss/",                                
+    "https://www.moneyweb.co.za/category/news-feed/feed/"             
+  ],
+  "Technologijos": [
+    "https://www.lrt.lt/rss/naujienos/mokslas-ir-it",                
+    "https://www.theverge.com/rss/index.xml",                     
+    "https://gadgets.ndtv.com/rss/feeds",                             
+    "https://www.arnnet.com.au/rss/",                                
+    "https://www.techzim.co.zw/feed/",                             
+    "https://tech.eu/feed/"                                           
+  ],
+  "Sveikata": [
+    "https://www.lrt.lt/rss/naujienos/sveikata",                    
+    "https://www.health24.com/rss/news",                           
+    "https://www.bbc.com/news/health/rss.xml",                        
+    "https://www.medicalnewstoday.com/rss",                          
+    "https://www.japantimes.co.jp/feed/",                            
+    "https://www1.folha.uol.com.br/internacional/en/rss091.xml"     
+  ],
+  "Mokslas": [
+    "https://www.lrt.lt/rss/naujienos/mokslas-ir-it",                
+    "https://www.nature.com/subjects/science/rss",                    
+    "https://www.scidev.net/global/feed/",                            
+    "https://www.dw.com/en/top-stories/science/s-12574/rss.xml"      
+  ],
+  "Sportas": [
+    "https://www.lrt.lt/rss/naujienos/sportas",                     
+    "https://www.bbc.com/sport/rss.xml",                           
+    "https://www.supersport.com/rss/news",                           
+    "https://www.espn.com/espn/rss/news",                           
+    "https://www.sportskeeda.com/feed",                               
+    "https://www.abc.net.au/news/feed/51120/rss.xml"                
+  ],
+  "Kriptovaliutos": [
+    "https://cointelegraph.com/rss",                                
+    "https://www.coindesk.com/arc/outboundfeeds/rss/",              
+    "https://cryptobriefing.com/feed/",                                
+    "https://bitcoinmagazine.nl/feed",                              
+    "https://news.bitcoin.com/feed/"                                
+  ],
+  "Automobiliai": [
+    "https://www.autobild.de/rss-feeds/rss-alles.jsp",                
+    "https://www.autoblog.com/rss.xml",                              
+    "https://www.caranddriver.com/rss/all.xml",                     
+    "https://motor.ru/rss/all.xml",                                   
+    "https://www.motortrend.com/feed/",                            
+    "https://www.autoexpress.co.uk/rss"                             
+  ],
+  "Mada": [
+    "https://www.vogue.co.uk/rss",                                   
+    "https://www.harpersbazaar.com/uk/rss/",                        
+    "https://www.elle.com/rss/uk",                                 
+    "https://www.glamour.de/rss/all",                              
+    "https://www.lofficielmalaysia.com/rss",                       
+    "https://www.afrofeminin.com/feed/"                             
+  ],
+  "Maistas": [
+    "https://www.seriouseats.com/rss",                            
+    "https://www.epicurious.com/services/rss",                     
+    "https://www.abc.net.au/news/feed/52084/rss.xml",                
+    "https://www.taste.com.au/recipes/rss",                         
+    "https://goodfood.co.za/feed/"                                
+  ],
+  "Muzika": [
+    "https://pitchfork.com/feed/",                               
+    "https://www.npr.org/rss/rss.php?id=1039",                   
+    "https://www.melodicmag.com/feed/",                          
+    "https://www.musicinafrica.net/rss",                             
+    "https://www.lrt.lt/rss/naujienos/kultura/aktualijos",             
+    "https://www.rollingstone.com/music/music-news/feed/"           
+  ],
+  "Kinas": [
+    "https://www.hollywoodreporter.com/t/movies/feed/",          
+    "https://www.empireonline.com/feeds/all",                      
+    "https://www.lrt.lt/rss/naujienos/kultura/aktualijos",       
+    "https://www.filmmakers.africa/feed/",                             
+    "https://cineuropa.org/rss.cfm",                                   
+    "https://www.koreatimes.co.kr/www/rss/rss.xml?sectionCode=144"   
+  ],
+  "Žaidimai": [
+    "https://www.ign.com/articles?format=rss",                      
+    "https://www.gamesradar.com/all-platforms/news/rss.xml",          
+    "https://www.polygon.com/rss/index.xml",                          
+    "https://www.eurogamer.net/?format=rss",                          
+    "https://nintendosoup.com/feed/",                            
+    "https://mygaming.co.za/news/feed/",                           
+    "https://www.lrt.lt/rss/naujienos/technologijos"             
+  ],
+  "Fotografija": [
+    "https://petapixel.com/feed/",                            
+    "https://www.dpreview.com/articles.rss",                           
+    "https://fstoppers.com/rss.xml",                            
+    "https://www.sadeczanin.info/rss/fotografia",                   
+    "https://www.lrt.lt/rss/naujienos/kultura/aktualijos"              
+  ],
+  "Kelionės": [
+    "https://www.lonelyplanet.com/news/rss",                          
+    "https://www.nationalgeographic.com/travel/rss.xml",            
+    "https://www.wanderlust.co.uk/rss/news",                           
+    "https://www.getaway.co.za/feed/",                                
+    "https://www.lrt.lt/rss/naujienos/gyvenimas/keliones"              
+  ],
+  "Gamta": [
+    "https://www.nationalgeographic.com/science/article/feed",        
+    "https://www.treehugger.com/rss.xml",                              
+    "https://feeds.sciencedaily.com/sciencedaily/earth_climate/rss.xml", 
+    "https://www.lrt.lt/rss/naujienos/gyvenimas/gamta"                
+  ],
+  "Švietimas": [
+    "https://www.edweek.org/news/rss.xml",                            
+    "https://www.insidehighered.com/rss/news",                        
+    "https://www.lrt.lt/rss/naujienos/lietuvos-diena/svietimas",      
+    "https://www.universityworldnews.com/rss_main.php",              
+    "https://www.africanews.com/tag/education/rss/"                   
+  ],
+  "Knygos": [
+    "https://www.nytimes.com/services/xml/rss/nyt/Books.xml",         
+    "https://www.publishersweekly.com/pw/rss/index.xml",              
+    "https://lithub.com/feed/",                                     
+    "https://www.lrt.lt/rss/naujienos/kultura/aktualijos",            
+    "https://www.literaturhuset.dk/feed/",                            
+    "https://www.booksandpublishing.com.au/feed/"                     
+  ],
+  "Menas": [
+    "https://www.artnews.com/c/art-news/feed/",                       
+    "https://www.artforum.com/rss/news",                            
+    "https://www.dezeen.com/feed/",                               
+    "https://www.lrt.lt/rss/naujienos/kultura/aktualijos",            
+    "https://artsouthafrica.com/feed/",                              
+    "https://www.culturenet.hr/default.aspx?id=6"                     
+  ]
+}

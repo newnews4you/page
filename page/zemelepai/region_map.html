@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8" />
+  <title>Regioninis straipsnių žemėlapis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <style>
+    html, body, #map {
+      margin: 0;
+      height: 100%;
+      width: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1e1e1e;
+    }
+    .filters {
+      position: absolute;
+      z-index: 1000;
+      background: #111;
+      padding: 10px 16px;
+      border-radius: 8px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .filters select, .filters input, .niche-bar button {
+      background: #222;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .niche-bar {
+      position: absolute;
+      top: 70px;
+      left: 10px;
+      z-index: 1000;
+      background: #111;
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .niche-bar button.active {
+      background-color: #33bbee;
+      color: #000;
+      font-weight: bold;
+    }
+    .leaflet-popup-content {
+      font-size: 14px;
+      color: #ddd;
+      max-width: 400px;
+      max-height: 520px;
+      overflow-y: auto;
+    }
+    .leaflet-popup-content img {
+      width: 100%;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+    .popup-article {
+      margin-bottom: 12px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    }
+    .popup-title {
+      font-size: 1em;
+      font-weight: bold;
+    }
+    .popup-date {
+      font-size: 0.85em;
+      color: #aaa;
+    }
+    .popup-summary {
+      font-size: 0.9em;
+      color: #ccc;
+    }
+    .more-btn, .back-btn {
+      display: block;
+      margin: 12px auto 0 auto;
+      background: #33bbee;
+      color: #111;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      padding: 7px 20px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+    .more-btn:hover, .back-btn:hover {
+      background: #23a0c7;
+    }
+  </style>
+</head>
+<body>
+  <div class="filters">
+    <label>Šalis:
+      <select id="countryFilter" onchange="filterCountry(this.value)">
+        <option value="">Visos</option>
+      </select>
+    </label>
+    <label>Nuo:
+      <input type="date" id="dateFrom" onchange="filterByDate()" />
+    </label>
+    <label>Iki:
+      <input type="date" id="dateTo" onchange="filterByDate()" />
+    </label>
+  </div>
+  <div class="niche-bar" id="nicheBar">
+    <button class="active" onclick="filterNiche('Visos')">Visos nišos</button>
+  </div>
+  <div id="map"></div>
+  <script>
+    const map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_dark/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
+    }).addTo(map);
+    L.Control.geocoder().addTo(map);
+
+    let regionArticles = {};
+    let geoJsonLayer;
+    let selectedCountry = '';
+    let selectedNiche = 'Visos';
+
+    function getURLParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+
+    fetch("../map_data/region_map.json")
+      .then(res => res.json())
+      .then(data => {
+        regionArticles = data;
+        const nicheParam = getURLParam("niche");
+        if (nicheParam) selectedNiche = nicheParam;
+        populateCountryFilter();
+        populateNicheFilter();
+        loadMapLayer();
+      });
+
+    function populateCountryFilter() {
+      const select = document.getElementById('countryFilter');
+      Object.keys(regionArticles).sort().forEach(country => {
+        const opt = document.createElement("option");
+        opt.value = country;
+        opt.text = country;
+        select.appendChild(opt);
+      });
+    }
+
+    function populateNicheFilter() {
+      const nicheSet = new Set();
+      Object.values(regionArticles).forEach(articles => {
+        articles.forEach(a => {
+          if (a.niche) nicheSet.add(a.niche);
+        });
+      });
+      const bar = document.getElementById('nicheBar');
+      bar.querySelectorAll("button:not(:first-child)").forEach(btn => btn.remove());
+      [...nicheSet].sort().forEach(niche => {
+        const btn = document.createElement("button");
+        btn.innerText = niche;
+        btn.onclick = () => filterNiche(niche);
+        bar.appendChild(btn);
+      });
+      if (selectedNiche !== 'Visos') filterNiche(selectedNiche);
+    }
+
+    function filterNiche(niche) {
+      selectedNiche = niche;
+      document.querySelectorAll('.niche-bar button').forEach(btn => btn.classList.remove('active'));
+      [...document.querySelectorAll('.niche-bar button')].find(btn => btn.textContent === niche)?.classList.add('active');
+      loadMapLayer();
+    }
+
+    function filterCountry(country) {
+      selectedCountry = country;
+      loadMapLayer();
+    }
+
+    function filterByDate() {
+      loadMapLayer();
+    }
+
+    function filterArticles(country) {
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+      let articles = regionArticles[country] || [];
+      if (selectedNiche !== 'Visos') articles = articles.filter(a => a.niche === selectedNiche);
+      if (selectedCountry && selectedCountry !== country) return [];
+      if (dateFrom) articles = articles.filter(a => new Date(a.date) >= new Date(dateFrom));
+      if (dateTo) articles = articles.filter(a => new Date(a.date) <= new Date(dateTo));
+      return articles;
+    }
+
+    function loadMapLayer() {
+      fetch("../map_data/countries.geo.json")
+        .then(res => res.json())
+        .then(worldData => {
+          if (geoJsonLayer) geoJsonLayer.remove();
+          geoJsonLayer = L.geoJSON(worldData, {
+            style: feature => {
+              const country = feature.properties.name;
+              const articles = filterArticles(country);
+              return articles.length > 0
+                ? { color: "#33bbee", weight: 1, fillColor: "#33bbee", fillOpacity: 0.6 }
+                : { color: "#444", weight: 0.5, fillOpacity: 0.1 };
+            },
+            onEachFeature: (feature, layer) => {
+              const country = feature.properties.name;
+              const articles = filterArticles(country);
+              if (articles.length > 0) {
+                let content = `
+                  <div style="max-width:400px;max-height:520px;overflow-y:auto">
+                    <h3 style="color:#33bbee;">${country}</h3>
+                    ${buildArticleHTML(articles, country, true)}
+                  </div>
+                `;
+                layer.bindPopup(content);
+              }
+              layer.on({
+                mouseover: e => e.target.setStyle({ fillOpacity: 0.8 }),
+                mouseout: e => {
+                  const country = feature.properties.name;
+                  const visible = filterArticles(country).length > 0;
+                  e.target.setStyle({ fillOpacity: visible ? 0.6 : 0.1 });
+                }
+              });
+            }
+          }).addTo(map);
+        });
+    }
+
+    function buildArticleHTML(articles, country, showButton) {
+      let html = '';
+      const maxToShow = 1;
+      const toShow = showButton ? articles.slice(0, maxToShow) : articles;
+      toShow.forEach(a => {
+        html += `<div class="popup-article">
+          ${a.image ? `<img src="${a.image}" />` : ""}
+          <div class="popup-title"><a href="${a.url}" target="_blank">${a.title}</a></div>
+          <div class="popup-date">${a.date}</div>
+          <div class="popup-summary">${a.summary}</div>
+        </div>`;
+      });
+      if (showButton && articles.length > maxToShow) {
+        html += `<button class="more-btn" onclick="showAllArticles('${country.replace(/'/g, "\\'")}', event)">Rodyti daugiau</button>`;
+      }
+      return html;
+    }
+
+    // Atidaryti visus straipsnius su "Grįžti" mygtuku
+    function showAllArticles(country, e) {
+      if (e) e.stopPropagation();
+      const articles = filterArticles(country);
+      const fullContent = `
+        <div style="max-width:400px;max-height:520px;overflow-y:auto">
+          <button class="back-btn" onclick="showLessArticles('${country.replace(/'/g, "\\'")}', event)">&#8592; Grįžti</button>
+          <h3 style="color:#33bbee;">${country}</h3>
+          ${buildArticleHTML(articles, country, false)}
+        </div>
+      `;
+      const popup = map._popup;
+      if (popup && popup._source && popup._source.feature?.properties?.name === country) {
+        popup.setContent(fullContent);
+      }
+    }
+
+    // Grįžti į pirmo straipsnio vaizdą (neišjungiant popup)
+    function showLessArticles(country, e) {
+      if (e) e.stopPropagation();
+      const articles = filterArticles(country);
+      const lessContent = `
+        <div style="max-width:400px;max-height:520px;overflow-y:auto">
+          <h3 style="color:#33bbee;">${country}</h3>
+          ${buildArticleHTML(articles, country, true)}
+        </div>
+      `;
+      const popup = map._popup;
+      if (popup && popup._source && popup._source.feature?.properties?.name === country) {
+        popup.setContent(lessContent);
+      }
+    }
+  </script>
+</body>
+</html>
