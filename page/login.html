@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8" />
+  <title>Prisijungimas / Registracija</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      background: #151617;
+      color: #eee;
+      font-family: Segoe UI, sans-serif;
+    }
+    #main {
+      max-width: 430px;
+      margin: 30px auto;
+      background: #222;
+      padding: 30px;
+      border-radius: 10px;
+    }
+    input, button, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #33bbee;
+      color: #111;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .tab-buttons button {
+      flex: 1;
+      background: #333;
+      color: #eee;
+    }
+    .tab-buttons .active {
+      background: #33bbee;
+      color: #111;
+    }
+    .hidden {
+      display: none;
+    }
+    .niches-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .niche-btn {
+      background: #444;
+      border: none;
+      color: #fff;
+      border-radius: 6px;
+      padding: 8px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .niche-btn:hover {
+      background: #555;
+    }
+    .niche-btn.active {
+      background: #33bbee;
+      color: #111;
+      font-weight: bold;
+    }
+    #msg {
+      font-size: 14px;
+      margin-top: 12px;
+    }
+    #loggedInText {
+      font-size: 14px;
+      color: #99f;
+      margin-top: 12px;
+    }
+    .custom-topics {
+      margin-top: 16px;
+    }
+    .custom-topics input {
+      margin-top: 5px;
+    }
+    .custom-topic-item {
+      background: #333;
+      padding: 6px 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .custom-topic-item button {
+      background: #bb4444;
+      color: #fff;
+      font-size: 13px;
+      padding: 3px 8px;
+      margin-left: 10px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="main">
+    <div class="tab-buttons" id="tabButtons">
+      <button id="showLogin" class="active">Prisijungti</button>
+      <button id="showRegister">Registruotis</button>
+    </div>
+
+    <div id="formLogin">
+      <input id="emailLogin" type="email" placeholder="El. paštas" />
+      <input id="passwordLogin" type="password" placeholder="Slaptažodis" />
+      <button id="loginBtn">Prisijungti</button>
+    </div>
+
+    <div id="formRegister" class="hidden">
+      <input id="emailReg" type="email" placeholder="El. paštas" />
+      <input id="passwordReg" type="password" placeholder="Slaptažodis" />
+      <input id="confirmReg" type="password" placeholder="Pakartoti slaptažodį" />
+      <button id="registerBtn">Registruotis</button>
+    </div>
+
+    <button id="backBtn">📘 Grįžti į žemėlapį</button>
+
+    <div id="userPanel" class="hidden">
+      <p id="loggedInText"></p>
+      <h3>Pasirinktos nišos:</h3>
+      <div id="nichesList" class="niches-grid"></div>
+
+      <div class="custom-topics">
+        <h3>Jūsų temos:</h3>
+        <input id="newTopicInput" type="text" placeholder="Įveskite temą ir spauskite +">
+        <button onclick="addCustomTopic()">+ Pridėti temą</button>
+        <div id="customTopicsList"></div>
+      </div>
+
+      <button id="saveBtn">💾 Išsaugoti</button>
+      <button id="logoutBtn">📕 Atsijungti</button>
+    </div>
+
+    <div id="msg"></div>
+  </div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCL4ZQiHOGgqw044caXJRsJ7mwF89dkAv4",
+    authDomain: "naujienu-platforma.firebaseapp.com",
+    projectId: "naujienu-platforma",
+    storageBucket: "naujienu-platforma.firebasestorage.app",
+    messagingSenderId: "1010199233351",
+    appId: "1:1010199233351:web:2139b922eaddf0af160262",
+    measurementId: "G-SCRB6Q69SH"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const niches = [
+    "Politika", "Sportas", "Technologijos", "Sveikata", "Verslas",
+    "Automobiliai", "Kriptovaliutos", "Fotografija", "Menas", "Maistas",
+    "Kinas", "Žaidimai", "Kelionės", "Knygos", "Muzika"
+  ];
+
+  let selectedNiches = [];
+  let customTopics = [];
+
+  function renderNiches(selected = []) {
+    selectedNiches = [...selected];
+    const container = document.getElementById("nichesList");
+    container.innerHTML = '';
+    niches.forEach(niche => {
+      const btn = document.createElement("button");
+      btn.className = "niche-btn";
+      btn.textContent = niche;
+      if (selected.includes(niche)) btn.classList.add("active");
+
+      btn.onclick = () => {
+        btn.classList.toggle("active");
+        if (btn.classList.contains("active")) {
+          selectedNiches.push(niche);
+        } else {
+          selectedNiches = selectedNiches.filter(n => n !== niche);
+        }
+      };
+
+      container.appendChild(btn);
+    });
+  }
+
+  function renderCustomTopics() {
+    const container = document.getElementById("customTopicsList");
+    container.innerHTML = '';
+    customTopics.forEach((topic, index) => {
+      const item = document.createElement("div");
+      item.className = "custom-topic-item";
+      item.innerHTML = `
+        <span>${topic}</span>
+        <button onclick="removeCustomTopic(${index})">X</button>
+      `;
+      container.appendChild(item);
+    });
+  }
+
+  function addCustomTopic() {
+    const input = document.getElementById("newTopicInput");
+    const value = input.value.trim();
+    if (value && !customTopics.includes(value)) {
+      customTopics.push(value);
+      input.value = '';
+      renderCustomTopics();
+    }
+  }
+
+  function removeCustomTopic(index) {
+    customTopics.splice(index, 1);
+    renderCustomTopics();
+  }
+
+  document.getElementById("showLogin").onclick = () => {
+    document.getElementById("formLogin").classList.remove("hidden");
+    document.getElementById("formRegister").classList.add("hidden");
+    document.getElementById("showLogin").classList.add("active");
+    document.getElementById("showRegister").classList.remove("active");
+  };
+
+  document.getElementById("showRegister").onclick = () => {
+    document.getElementById("formRegister").classList.remove("hidden");
+    document.getElementById("formLogin").classList.add("hidden");
+    document.getElementById("showRegister").classList.add("active");
+    document.getElementById("showLogin").classList.remove("active");
+  };
+
+  document.getElementById("loginBtn").onclick = async () => {
+    const email = document.getElementById("emailLogin").value;
+    const password = document.getElementById("passwordLogin").value;
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      document.getElementById("msg").innerText = "✅ Prisijungta!";
+    } catch (e) {
+      document.getElementById("msg").innerText = "❌ " + e.message;
+    }
+  };
+
+  document.getElementById("registerBtn").onclick = async () => {
+    const email = document.getElementById("emailReg").value;
+    const password = document.getElementById("passwordReg").value;
+    const confirm = document.getElementById("confirmReg").value;
+    if (password !== confirm) {
+      document.getElementById("msg").innerText = "❌ Slaptažodžiai nesutampa.";
+      return;
+    }
+    try {
+      await auth.createUserWithEmailAndPassword(email, password);
+      document.getElementById("msg").innerText = "✅ Registracija sėkminga!";
+    } catch (e) {
+      document.getElementById("msg").innerText = "❌ " + e.message;
+    }
+  };
+
+  document.getElementById("saveBtn").onclick = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    await db.collection("users").doc(user.uid).set({
+      niches: selectedNiches,
+      customTopics: customTopics
+    });
+    document.getElementById("msg").innerText = "✅ Išsaugota!";
+  };
+
+  document.getElementById("logoutBtn").onclick = () => {
+    auth.signOut();
+  };
+
+  document.getElementById("backBtn").onclick = () => {
+    window.location.href = "zemelepai/region_map.html";
+  };
+
+  auth.onAuthStateChanged(async user => {
+    const loginForm = document.getElementById("formLogin");
+    const regForm = document.getElementById("formRegister");
+    const userPanel = document.getElementById("userPanel");
+    const loggedInText = document.getElementById("loggedInText");
+    const tabButtons = document.getElementById("tabButtons");
+
+    if (user) {
+      loginForm.classList.add("hidden");
+      regForm.classList.add("hidden");
+      userPanel.classList.remove("hidden");
+      loggedInText.textContent = `Prisijungta kaip: ${user.email}`;
+      tabButtons.style.display = "none";
+
+      const doc = await db.collection("users").doc(user.uid).get();
+      const data = doc.exists ? doc.data() : {};
+      renderNiches(data.niches || []);
+      customTopics = data.customTopics || [];
+      renderCustomTopics();
+    } else {
+      loginForm.classList.remove("hidden");
+      regForm.classList.add("hidden");
+      userPanel.classList.add("hidden");
+      tabButtons.style.display = "flex";
+      document.getElementById("msg").innerText = "";
+    }
+  });
+</script>
+</body>
+</html>
