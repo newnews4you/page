@@ -4,18 +4,46 @@
   <meta charset="UTF-8" />
   <title>Regioninis straipsnių žemėlapis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Leaflet ir geocoder -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCL4ZQiHOGgqw044caXJRsJ7mwF89dkAv4",
+      authDomain: "naujienu-platforma.firebaseapp.com",
+      projectId: "naujienu-platforma",
+      storageBucket: "naujienu-platforma.firebasestorage.app",
+      messagingSenderId: "1010199233351",
+      appId: "1:1010199233351:web:2139b922eaddf0af160262",
+      measurementId: "G-SCRB6Q69SH"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+  </script>
   <style>
-    html, body {
-      margin: 0; padding: 0; width: 100vw; height: 100vh;
-      font-family: 'Segoe UI', sans-serif; background: #151617;
-    }
+ html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden; /* 🔥 neleidžia išlįsti uodegai */
+  font-family: 'Segoe UI', sans-serif;
+  background: #151617;
+}
+
+
     body { min-height: 100vh; min-width: 100vw; }
     .header-bar {
-      width: 100vw;
+       width: 100%;
       background: #111;
       position: fixed;
       top: 18px;
@@ -34,7 +62,7 @@
       gap: 18px;
       align-items: center;
       justify-content: center;
-      width: 95vw;
+      width: 95%;
       max-width: 820px;
       padding: 0;
       background: transparent;
@@ -59,15 +87,15 @@
       max-width: 170px;
     }
     #main-content {
-      width: 100vw;
-      height: 100vh;
+        width: 100%;
+  height: 100%;
       margin-top: 76px; /* header aukštis + atitraukimas */
       position: relative;
       background: #151617;
       overflow: hidden;
     }
     #map {
-      width: 100vw;
+      width: 100%;
       height: calc(100vh - 124px); /* header + niche bar */
       min-height: 320px;
       background: #151617;
@@ -78,7 +106,7 @@
       position: fixed;
       left: 0;
       bottom: 0;
-      width: 100vw;
+      width: 100%;
       overflow-x: auto;
       overflow-y: hidden;
       display: flex;
@@ -155,16 +183,16 @@
       background: #23a0c7;
     }
     /* PC: niche bar kairėje */
-    @media (min-width: 700px) {
+    @media (min-width: 800px) {
       .niche-bar {
         position: fixed;
         top: 82px;
         left: 0;
         bottom: unset;
         flex-direction: column;
-        width: 145px;
+        width: 190px;
         min-width: 105px;
-        max-width: 170px;
+        max-width: 255px;
         height: calc(100vh - 90px);
         gap: 8px;
         background: #191919;
@@ -176,7 +204,7 @@
       }
       #map {
         margin-left: 155px;
-        width: calc(100vw - 155px);
+        width: calc(100% - 155px);
         height: calc(100vh - 76px);
       }
     }
@@ -196,201 +224,331 @@
       #main-content { margin-top: 58px; }
       .leaflet-popup-content { max-width: 98vw; max-height: 52vw; }
     }
+ 
+#authPanel {
+  position: absolute;
+  z-index: 1002;
+}
+
+/* Kompiuteryje – viršuje dešinėje */
+@media (min-width: 700px) {
+ #authPanel {
+  position: absolute;
+  top: 2px;
+  right: 70px;
+  z-index: 1003;
+  max-width: 95%; /* 💥 Neleis išeiti už ribų */
+  overflow: hidden;
+}
+
+
+.account-button {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: #33bbee;
+  color: #111;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 25px;
+}
+
+
+
+  .account-button:hover {
+    background: #23a0c7;
+  }
+}
+
+
+
+
+
+/* Telefone – virš nišų, dešinėje */
+@media (max-width: 699px) {
+  #authPanel {
+    position: fixed;
+    bottom: 60px; /* virš nišų */
+    right: 12px;
+  }
+
+  .account-button {
+    font-size: 16px;
+    padding: 10px 18px;
+  }
+}
+
+.account-button {
+  background: #33bbee;
+  color: #111;
+  border-radius: 6px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: background 0.2s;
+  display: inline-block;
+}
+.account-button:hover {
+  background: #23a0c7;
+}
+* {
+  box-sizing: border-box;
+}
+
+
+
+
+
+
   </style>
 </head>
 <body>
-  <div class="header-bar">
-    <div class="filters">
-      <label>Šalis:
-        <select id="countryFilter" onchange="filterCountry(this.value)">
-          <option value="">Visos</option>
-        </select>
-      </label>
-      <label>Nuo:
-        <input type="date" id="dateFrom" onchange="filterByDate()" />
-      </label>
-      <label>Iki:
-        <input type="date" id="dateTo" onchange="filterByDate()" />
-      </label>
-    </div>
+
+<div class="header-bar">
+  <div class="filters">
+    <label>Šalis:
+      <select id="countryFilter" onchange="filterCountry(this.value)">
+        <option value="">Visos</option>
+      </select>
+    </label>
+    <label>Nuo:
+      <input type="date" id="dateFrom" onchange="filterByDate()" />
+    </label>
+    <label>Iki:
+      <input type="date" id="dateTo" onchange="filterByDate()" />
+    </label>
   </div>
-  <div id="main-content">
-    <div id="map"></div>
-    <div class="niche-bar" id="nicheBar">
-      <button class="active" onclick="filterNiche('Visos')">Visos nišos</button>
-    </div>
+
+  <!-- TURI BŪTI ČIA -->
+  <div id="authPanel">
+    <a id="accountBtn" href="#" class="account-button">Mano paskyra</a>
   </div>
-  <script>
-    const map = L.map('map').setView([20, 0], 2);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> | &copy; OpenStreetMap contributors'
+</div>
+
+<div id="main-content">
+  <div id="map"></div>
+
+  <div class="niche-bar" id="nicheBar">
+    <button class="active" onclsick="filterNiche('Visos')">Visos nišos</button>
+  </div>
+</div>
+
+
+
+
+
+<script>
+let regionArticles = {};
+let geoJsonLayer;
+let selectedCountry = '';
+let selectedNiche = 'Visos';
+let userNiches = [];
+
+const map = L.map('map').setView([20, 0], 2);
+L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_dark/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
 }).addTo(map);
-    L.Control.geocoder().addTo(map);
+L.Control.geocoder().addTo(map);
 
-    let regionArticles = {};
-    let geoJsonLayer;
-    let selectedCountry = '';
-    let selectedNiche = 'Visos';
+function getURLParam(name) {
+  const url = new URL(window.location.href);
+  return url.searchParams.get(name);
+}
 
-    function getURLParam(name) {
-      const url = new URL(window.location.href);
-      return url.searchParams.get(name);
-    }
+// Prisijungimo būsena
+auth.onAuthStateChanged(async user => {
+  const accountBtn = document.getElementById("accountBtn");
 
-    fetch("../map_data/region_map.json")
-      .then(res => res.json())
-      .then(data => {
-        regionArticles = data;
-        const nicheParam = getURLParam("niche");
-        if (nicheParam) selectedNiche = nicheParam;
-        populateCountryFilter();
-        populateNicheFilter();
-        loadMapLayer();
-      });
+  if (user) {
+    accountBtn.href = "../login.html";
 
-    function populateCountryFilter() {
-      const select = document.getElementById('countryFilter');
-      Object.keys(regionArticles).sort().forEach(country => {
-        const opt = document.createElement("option");
-        opt.value = country;
-        opt.text = country;
-        select.appendChild(opt);
-      });
-    }
+    // 🟢 GRĄŽINAM: gaunam nišas iš Firestore
+    const doc = await db.collection('users').doc(user.uid).get();
+    userNiches = doc.exists && doc.data().niches ? doc.data().niches : [];
 
-    function populateNicheFilter() {
-      const nicheSet = new Set();
-      Object.values(regionArticles).forEach(articles => {
-        articles.forEach(a => {
-          if (a.niche) nicheSet.add(a.niche);
-        });
-      });
-      const bar = document.getElementById('nicheBar');
-      bar.querySelectorAll("button:not(:first-child)").forEach(btn => btn.remove());
-      [...nicheSet].sort().forEach(niche => {
-        const btn = document.createElement("button");
-        btn.innerText = niche;
-        btn.onclick = () => filterNiche(niche);
-        bar.appendChild(btn);
-      });
-      if (selectedNiche !== 'Visos') filterNiche(selectedNiche);
-    }
+  } else {
+    accountBtn.href = "../login.html";
+    userNiches = []; // nieko nerodys
+  }
 
-    function filterNiche(niche) {
-      selectedNiche = niche;
-      document.querySelectorAll('.niche-bar button').forEach(btn => btn.classList.remove('active'));
-      [...document.querySelectorAll('.niche-bar button')].find(btn => btn.textContent === niche)?.classList.add('active');
+  // Vis tiek kraunam straipsnius ir nišas
+  fetch("../map_data/region_map.json")
+    .then(res => res.json())
+    .then(data => {
+      regionArticles = data;
+      const nicheParam = getURLParam("niche");
+      if (nicheParam) selectedNiche = nicheParam;
+      populateCountryFilter();
+      populateNicheFilter();
       loadMapLayer();
-    }
+    });
+});
 
-    function filterCountry(country) {
-      selectedCountry = country;
-      loadMapLayer();
-    }
+document.getElementById("logoutBtn").onclick = () => {
+  auth.signOut().then(() => {
+    console.log("✅ Atsijungta sėkmingai");
+  }).catch(error => {
+    console.error("❌ Atsijungimo klaida:", error);
+  });
+};
+function populateCountryFilter() {
+  const select = document.getElementById('countryFilter');
+  select.innerHTML = '<option value="">Visos</option>';
+  Object.keys(regionArticles).sort().forEach(country => {
+    const opt = document.createElement("option");
+    opt.value = country;
+    opt.text = country;
+    select.appendChild(opt);
+  });
+}
 
-    function filterByDate() {
-      loadMapLayer();
-    }
+function populateNicheFilter() {
+  const nicheSet = new Set();
+  Object.values(regionArticles).forEach(articles => {
+    articles.forEach(a => {
+      if (a.niche) nicheSet.add(a.niche);
+    });
+  });
+  const bar = document.getElementById('nicheBar');
+  bar.querySelectorAll("button:not(:first-child)").forEach(btn => btn.remove());
 
-    function filterArticles(country) {
-      const dateFrom = document.getElementById('dateFrom').value;
-      const dateTo = document.getElementById('dateTo').value;
-      let articles = regionArticles[country] || [];
-      if (selectedNiche !== 'Visos') articles = articles.filter(a => a.niche === selectedNiche);
-      if (selectedCountry && selectedCountry !== country) return [];
-      if (dateFrom) articles = articles.filter(a => new Date(a.date) >= new Date(dateFrom));
-      if (dateTo) articles = articles.filter(a => new Date(a.date) <= new Date(dateTo));
-      return articles;
-    }
+  const allowed = userNiches.length > 0
+    ? [...nicheSet].filter(n => userNiches.includes(n))
+    : [...nicheSet];
 
-    function loadMapLayer() {
-      fetch("../map_data/countries.geo.json")
-        .then(res => res.json())
-        .then(worldData => {
-          if (geoJsonLayer) geoJsonLayer.remove();
-          geoJsonLayer = L.geoJSON(worldData, {
-            style: feature => {
+  allowed.sort().forEach(niche => {
+    const btn = document.createElement("button");
+    btn.innerText = niche;
+    btn.onclick = () => filterNiche(niche);
+    bar.appendChild(btn);
+  });
+
+  if (selectedNiche !== 'Visos') filterNiche(selectedNiche);
+}
+
+function filterNiche(niche) {
+  selectedNiche = niche;
+  document.querySelectorAll('.niche-bar button').forEach(btn => btn.classList.remove('active'));
+  [...document.querySelectorAll('.niche-bar button')].find(btn => btn.textContent === niche)?.classList.add('active');
+  loadMapLayer();
+}
+
+function filterCountry(country) {
+  selectedCountry = country;
+  loadMapLayer();
+}
+
+function filterByDate() {
+  loadMapLayer();
+}
+function filterArticles(country) {
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo = document.getElementById('dateTo').value;
+  let articles = regionArticles[country] || [];
+
+  if (selectedNiche !== 'Visos') {
+    articles = articles.filter(a => a.niche === selectedNiche);
+  }
+  if (selectedCountry && selectedCountry !== country) return [];
+
+  if (dateFrom) articles = articles.filter(a => new Date(a.date) >= new Date(dateFrom));
+  if (dateTo) articles = articles.filter(a => new Date(a.date) <= new Date(dateTo));
+
+  return articles;
+}
+
+function loadMapLayer() {
+  fetch("../map_data/countries.geo.json")
+    .then(res => res.json())
+    .then(worldData => {
+      if (geoJsonLayer) geoJsonLayer.remove();
+      geoJsonLayer = L.geoJSON(worldData, {
+        style: feature => {
+          const country = feature.properties.name;
+          const articles = filterArticles(country);
+          return articles.length > 0
+            ? { color: "#33bbee", weight: 1, fillColor: "#33bbee", fillOpacity: 0.6 }
+            : { color: "#444", weight: 0.5, fillOpacity: 0.08 };
+        },
+        onEachFeature: (feature, layer) => {
+          const country = feature.properties.name;
+          const articles = filterArticles(country);
+          if (articles.length > 0) {
+            const content = `
+              <div style="max-width:320px;max-height:420px;overflow-y:auto">
+                <h3 style="color:#33bbee;">${country}</h3>
+                ${buildArticleHTML(articles, country, true)}
+              </div>
+            `;
+            layer.bindPopup(content);
+          }
+
+          layer.on({
+            mouseover: e => e.target.setStyle({ fillOpacity: 0.8 }),
+            mouseout: e => {
               const country = feature.properties.name;
-              const articles = filterArticles(country);
-              return articles.length > 0
-                ? { color: "#33bbee", weight: 1, fillColor: "#33bbee", fillOpacity: 0.6 }
-                : { color: "#444", weight: 0.5, fillOpacity: 0.08 };
-            },
-            onEachFeature: (feature, layer) => {
-              const country = feature.properties.name;
-              const articles = filterArticles(country);
-              if (articles.length > 0) {
-                let content = `
-                  <div style="max-width:320px;max-height:420px;overflow-y:auto">
-                    <h3 style="color:#33bbee;">${country}</h3>
-                    ${buildArticleHTML(articles, country, true)}
-                  </div>
-                `;
-                layer.bindPopup(content);
-              }
-              layer.on({
-                mouseover: e => e.target.setStyle({ fillOpacity: 0.8 }),
-                mouseout: e => {
-                  const country = feature.properties.name;
-                  const visible = filterArticles(country).length > 0;
-                  e.target.setStyle({ fillOpacity: visible ? 0.6 : 0.08 });
-                }
-              });
+              const visible = filterArticles(country).length > 0;
+              e.target.setStyle({ fillOpacity: visible ? 0.6 : 0.08 });
             }
-          }).addTo(map);
-        });
-    }
+          });
+        }
+      }).addTo(map);
+    });
+}
+function buildArticleHTML(articles, country, showButton) {
+  let html = '';
+  const maxToShow = 1;
+  const toShow = showButton ? articles.slice(0, maxToShow) : articles;
 
-    function buildArticleHTML(articles, country, showButton) {
-      let html = '';
-      const maxToShow = 1;
-      const toShow = showButton ? articles.slice(0, maxToShow) : articles;
-      toShow.forEach(a => {
-        html += `<div class="popup-article">
-          ${a.image ? `<img src="${a.image}" />` : ""}
-          <div class="popup-title"><a href="${a.url}" target="_blank">${a.title}</a></div>
-          <div class="popup-date">${a.date}</div>
-          <div class="popup-summary">${a.summary}</div>
-        </div>`;
-      });
-      if (showButton && articles.length > maxToShow) {
-        html += `<button class="more-btn" onclick="showAllArticles('${country.replace(/'/g, "\\'")}', event)">Rodyti daugiau</button>`;
-      }
-      return html;
-    }
+  toShow.forEach(a => {
+    html += `<div class="popup-article">
+      ${a.image ? `<img src="${a.image}" />` : ""}
+      <div class="popup-title"><a href="${a.url}" target="_blank">${a.title}</a></div>
+      <div class="popup-date">${a.date}</div>
+      <div class="popup-summary">${a.summary}</div>
+    </div>`;
+  });
 
-    // Atidaryti visus straipsnius su "Grįžti" mygtuku
-    function showAllArticles(country, e) {
-      if (e) e.stopPropagation();
-      const articles = filterArticles(country);
-      const fullContent = `
-        <div style="max-width:320px;max-height:420px;overflow-y:auto">
-          <button class="back-btn" onclick="showLessArticles('${country.replace(/'/g, "\\'")}', event)">&#8592; Grįžti</button>
-          <h3 style="color:#33bbee;">${country}</h3>
-          ${buildArticleHTML(articles, country, false)}
-        </div>
-      `;
-      const popup = map._popup;
-      if (popup && popup._source && popup._source.feature?.properties?.name === country) {
-        popup.setContent(fullContent);
-      }
-    }
+  if (showButton && articles.length > maxToShow) {
+    html += `<button class="more-btn" onclick="showAllArticles('${country.replace(/'/g, "\\'")}', event)">Rodyti daugiau</button>`;
+  }
 
-    // Grįžti į pirmo straipsnio vaizdą (neišjungiant popup)
-    function showLessArticles(country, e) {
-      if (e) e.stopPropagation();
-      const articles = filterArticles(country);
-      const lessContent = `
-        <div style="max-width:320px;max-height:420px;overflow-y:auto">
-          <h3 style="color:#33bbee;">${country}</h3>
-          ${buildArticleHTML(articles, country, true)}
-        </div>
-      `;
-      const popup = map._popup;
-      if (popup && popup._source && popup._source.feature?.properties?.name === country) {
-        popup.setContent(lessContent);
-      }
-    }
-  </script>
+  return html;
+}
+
+function showAllArticles(country, e) {
+  if (e) e.stopPropagation();
+  const articles = filterArticles(country);
+  const fullContent = `
+    <div style="max-width:320px;max-height:420px;overflow-y:auto">
+      <button class="back-btn" onclick="showLessArticles('${country.replace(/'/g, "\\'")}', event)">&#8592; Grįžti</button>
+      <h3 style="color:#33bbee;">${country}</h3>
+      ${buildArticleHTML(articles, country, false)}
+    </div>
+  `;
+  const popup = map._popup;
+  if (popup && popup._source?.feature?.properties?.name === country) {
+    popup.setContent(fullContent);
+  }
+}
+
+function showLessArticles(country, e) {
+  if (e) e.stopPropagation();
+  const articles = filterArticles(country);
+  const lessContent = `
+    <div style="max-width:320px;max-height:420px;overflow-y:auto">
+      <h3 style="color:#33bbee;">${country}</h3>
+      ${buildArticleHTML(articles, country, true)}
+    </div>
+  `;
+  const popup = map._popup;
+  if (popup && popup._source?.feature?.properties?.name === country) {
+    popup.setContent(lessContent);
+  }
+}
+</script>
 </body>
 </html>
